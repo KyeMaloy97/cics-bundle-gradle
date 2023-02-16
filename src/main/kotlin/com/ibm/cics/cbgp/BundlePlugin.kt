@@ -2,7 +2,7 @@
  * #%L
  * CICS Bundle Gradle Plugin
  * %%
- * Copyright (C) 2019 IBM Corp.
+ * Copyright (C) 2019, 2023 IBM Corp.
  * %%
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -41,20 +41,20 @@ class BundlePlugin : Plugin<Project> {
 		project.pluginManager.apply(BasePlugin::class.java)
 
 		// Create cicsBundle extension
-		project.extensions.create(BUNDLE_EXTENSION_NAME, BundleExtension::class.java)
-
-		// Create extra config extension and delegate some DSL methods to it. This lets us put these methods at the project level, rather than have to have them nested under the extension.
-		val extraConfigExtension = project.extensions.create(EXTRA_CONFIG_EXTENSION_NAME, ExtraConfigExtension::class.java)
-		project.extra.set(OSGI_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleOsgi(this) })
-		project.extra.set(WAR_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleWar(this) })
-		project.extra.set(EAR_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleEar(this) })
-		project.extra.set(EBA_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleEba(this) })
+		project.extensions.create(BUNDLE_EXTENSION_NAME, BundleExtension::class.java, project.dependencies)
 
 		// Define cicsBundlePart dependency configuration
-		project.configurations.register(BUNDLE_DEPENDENCY_CONFIGURATION_NAME) {
+		val cicsBundlePartConfiguration = project.configurations.register(BUNDLE_DEPENDENCY_CONFIGURATION_NAME) {
 			this.description = "Dependencies that constitute Java-based bundle parts that should be included in this CICS bundle."
 			this.isVisible = false
 		}
+
+		// Create extra config extension and delegate some DSL methods to it. This lets us put these methods at the project level, rather than have to have them nested under the extension.
+		val extraConfigExtension = project.extensions.create(EXTRA_CONFIG_EXTENSION_NAME, ExtraConfigExtension::class.java)
+		project.dependencies.extra.set(OSGI_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleOsgi(this) })
+		project.dependencies.extra.set(WAR_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleWar(this) })
+		project.dependencies.extra.set(EAR_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleEar(this) })
+		project.dependencies.extra.set(EBA_METHOD_NAME, closureOf<Any> { extraConfigExtension.cicsBundleEba(this) })
 
 		// Define build task
 		val buildTaskProvider = project.tasks.register(BUILD_TASK_NAME, BuildBundleTask::class.java) {
